@@ -52,6 +52,9 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+	%% When we start up, go get the latest mention IDs and store those
+	%% as being "the last ones seen". This way we won't spam the channel
+	%% on startup.
 	{ok, #state{}}.
 
 %%--------------------------------------------------------------------
