@@ -10,7 +10,7 @@
 -module(dd_twt).
 
 -behaviour(gen_server).
-
+-compile(export_all).
 %% API
 -export([start_link/0]).
 
@@ -19,6 +19,11 @@
 		 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+
+-record(tweet, {nick,
+				name,
+				text,
+				id}).
 
 -record(state, {}).
 
@@ -55,6 +60,7 @@ init([]) ->
 	%% When we start up, go get the latest mention IDs and store those
 	%% as being "the last ones seen". This way we won't spam the channel
 	%% on startup.
+	ets:new(twets, [set, named_table]),
 	{ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -129,3 +135,32 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+
+%%--------------------------------------------------------------------
+%% ETS table helper functions
+%%--------------------------------------------------------------------
+-spec store_tweet(Tweet) -> true when
+	  Tweet :: #tweet{}.
+store_tweet(#tweet{id=ID}=T) ->
+	ets:insert(twets, {ID, T}).
+
+get_tweet_by_id(ID) ->
+	ets:lookup(twets, ID).
+
+%%--------------------------------------------------------------------
+%% Twitter specific functions
+%%--------------------------------------------------------------------
+get_mentions() ->
+	JSON = oauth_twitter:get_mentions(1),
+	{array, Tweets} = mochijson:decode(JSON),
+	[ get_usertimeline_tweet(Twt) || Twt <- Tweets ].
+
+-spec get_usertimeline_tweet({'struct', [any()]}) -> #tweet{}.
+get_usertimeline_tweet({struct, Twt}) ->
+    {struct, User} = proplists:get_value("user", Twt),
+    Nick = proplists:get_value("screen_name", User),
+    Name = proplists:get_value("name", User),
+    Text = proplists:get_value("text", Twt),
+	Id = proplists:get_value("id", Twt),
+	#tweet{nick=Nick, name=Name, text=cleanup(Text), id=Id}.
