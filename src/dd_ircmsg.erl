@@ -72,7 +72,7 @@ nick_from_prefix(P) ->
 %%     _Content = binary_to_list(_T), 
 %%     ?PRINT("~s <~s> ~s~n", [_Channel, _Nick, _Content]);
 show(#ircmsg{}=_Msg) ->
-    ?PRINT("~p~n",[_Msg]).
+    ?PRINT(_Msg).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -23,6 +23,7 @@
 -module(dd_connection).
 
 -behaviour(gen_server).
+-define(PRINT(Var, Fmt), io:format(Var, Fmt)).
 -include("../include/dd_irc.hrl").
 
 -define(COLON, 58).
