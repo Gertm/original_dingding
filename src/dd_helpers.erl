@@ -27,7 +27,7 @@
 -export([ip_to_int/1, int_to_ip/1]).
 -export([bin_to_int/1, int_to_bin/1]).
 -export([get_first_public_ip/0, remove_crnl/1, cleanup_html_entities/1, trim_ws/1]).
-
+-export([write_term_to_file/2]).
 -spec consult_priv_dir_file(string()) -> any().
 consult_priv_dir_file(Filename) ->
     PrivDir = code:lib_dir(dd, priv),    
@@ -251,3 +251,11 @@ request_whois(ReplyPid, Nick) ->
     %% the response to this will be caught in the numeric reply handlers.
     dd_connection:send_msg(ReplyPid, <<>>, <<"WHOIS">>, [Nick], Nick),
     ok.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Write term to file.
+%% @end
+%%--------------------------------------------------------------------
+write_term_to_file(Filename, Term) ->
+	file:write_file(Filename,io_lib:fwrite("~p.~n",[Term])).
