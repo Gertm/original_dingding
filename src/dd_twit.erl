@@ -19,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {pid, chans}).
 
 %%%===================================================================
 %%% API
@@ -58,8 +58,8 @@ add_handler() ->
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-	{ok, #state{}}.
+init({Pid, ChannelList}) ->
+	{ok, #state{pid=Pid, chans=ChannelList}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -74,6 +74,9 @@ init([]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
+handle_event({sendmsg, Line}, #state{pid=Pid, chans=Chanlist}=State) ->
+	[ dd_connection:reply(Pid, Chan, Line) || Chan <- Chanlist ],
+	{ok, State};
 handle_event(_Event, State) ->
 	{ok, State}.
 
