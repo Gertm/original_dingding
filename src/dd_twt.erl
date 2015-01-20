@@ -181,6 +181,9 @@ have_tweet(#tweet{id=ID}) ->
 		[_] -> true
 	end.
 
+report_tweet(Tweet) ->
+	io:format("~p~n",[Tweet]).
+
 get_and_store_mentions() ->
 	Mentions = get_mentions(),
 	[ io:format(tweet_to_line(Mention)++"~n") || Mention <- Mentions ],
