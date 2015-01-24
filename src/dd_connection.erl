@@ -406,7 +406,7 @@ join_channels(#state{serverconfig=#serverconfig{channels=Channels}}=State) ->
             X ->  
                 gen_server:cast(self(), {send_raw, iolist_to_binary([<<"JOIN ">>, X])}) 
         end || Channel <- Channels ],
-    spawn(dd_twitter, periodic_get_mentions, []),
+    spawn(dd_twitter, periodic_get_mentions, [startup]),
     {ok, State}.
 
 %% @doc

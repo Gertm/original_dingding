@@ -10,7 +10,7 @@
 
 -compile(export_all).
 -export([get_tweet/1, get_usertimeline_tweet/1, reply_with_tweet/3, get_tweets/1, tweet_to_line/1, tweet/2, is_tweet/1]).
--export([periodic_get_mentions/0]).
+-export([periodic_get_mentions/1]).
 
 -define(SingleTweetPattern, "https?://twitter.com/(\\w*)/status\\w?\\w?/(\\d*)").
 
@@ -62,6 +62,12 @@ get_mentions(ReplyPid, Args) ->
 					reply_with_tweet(Tweet, ReplyPid, Args)
 			end)
       || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- Tweets ]],
+	[ store_id(Twt) || Twt <- Tweets ],
+	ok.
+
+get_mentions(_ReplyPid, _Args, startup) ->
+	JSON = oauth_twitter:get_mentions(1),
+	{array, Tweets} = mochijson:decode(JSON),
 	[ store_id(Twt) || Twt <- Tweets ],
 	ok.
 
@@ -192,10 +198,15 @@ url_encode([{Key,Value}|R],Acc) ->
     url_encode(R, Acc ++ "&" ++ edoc_lib:escape_uri(Key) ++ "=" ++
 edoc_lib:escape_uri(Value)).
 
-periodic_get_mentions() ->
-	dd_twitter:get_mentions('Freenode',["#yfl"]),
+periodic_get_mentions(Startup) ->
+	case Startup of
+		startup ->
+			dd_twitter:get_mentions('Freenode',["#yfl"], startup);
+		_ ->
+			dd_twitter:get_mentions('Freenode',["#yfl"])
+	end,
 	receive
 	after 1000*60*5 ->
 			ok
 	end,
-	periodic_get_mentions().
+	periodic_get_mentions(false).
