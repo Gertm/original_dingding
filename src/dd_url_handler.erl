@@ -169,7 +169,13 @@ get_page_title(Url) when is_binary(Url) ->
     get_page_title(binary_to_list(Url));
 get_page_title(TheUrl) ->
     Url = hd(string:tokens(TheUrl, "#")),
-	gpt(Url).
+	{T,_} = type_and_size(Url),
+	case string:to_lower(T) of
+		"text/html" ->
+			gpt(Url);
+		_ ->
+			none
+	end.
     %% {T, _} = type_and_size(Url),
     %% Type = string:tokens(T,"/"),
     %% case Type of
