@@ -24,7 +24,7 @@
 
 %% debug exports for testing
 -export([type_and_size/1, get_page_title/1]).
--export([tinyurl/1]).
+-export([tinyurl/1, gpt/1]).
 
 %% @doc
 %% Prefix is the part that contains the nickname and host on most messages
@@ -169,36 +169,56 @@ get_page_title(Url) when is_binary(Url) ->
     get_page_title(binary_to_list(Url));
 get_page_title(TheUrl) ->
     Url = hd(string:tokens(TheUrl, "#")),
-    {T, _} = type_and_size(Url),
-    Type = string:tokens(T,"/"),
-    case Type of
-        ["text", _] ->
-            Resp = dd_helpers:http_get(Url),
-            case Resp of
-                {ok, {_, _, Contents}} ->
-                    {<<"html">>,_,Tags} = mochiweb_html:parse(Contents),
-                    [{<<"head">>,_,HeadTags}] =
-                        lists:filter(
-                          fun(X) -> case X of
-                                        {<<"head">>,_,_} -> true;
-                                        _ -> false
-                                    end end, Tags),
-                    [{<<"title">>,_,TitleList}] =
-                        lists:filter(
-                          fun(X) -> case X of
-                                        {<<"title">>,_,_} -> true;
-                                        _ -> false
-                                    end end, HeadTags),
-                    io:format("~p~n",[TitleList]),
-                    dd_helpers:trim_ws(dd_helpers:cleanup_html_entities(hd(TitleList)));
-                _ -> none
-            end;
-        ["image", _] ->
-            none;
-        ["video", _] ->
-            none;
-        ["application", "pdf"] ->
-            dd_pdf:get_pdf_info(list_to_binary(Url));
-        [] -> none
-    end.
+	gpt(Url).
+    %% {T, _} = type_and_size(Url),
+    %% Type = string:tokens(T,"/"),
+    %% case Type of
+    %%     ["text", _] ->
+	%% 		gpt(Url);
+            %% Resp = dd_helpers:http_get(Url),
+            %% case Resp of
+            %%     {ok, {_, _, Contents}} ->
+            %%         {<<"html">>,_,Tags} = mochiweb_html:parse(Contents),
+            %%         [{<<"head">>,_,HeadTags}] =
+            %%             lists:filter(
+            %%               fun(X) -> case X of
+            %%                             {<<"head">>,_,_} -> true;
+            %%                             _ -> false
+            %%                         end end, Tags),
+            %%         [{<<"title">>,_,TitleList}] =
+            %%             lists:filter(
+            %%               fun(X) -> case X of
+            %%                             {<<"title">>,_,_} -> true;
+            %%                             _ -> false
+            %%                         end end, HeadTags),
+            %%         io:format("~p~n",[TitleList]),
+            %%         dd_helpers:trim_ws(dd_helpers:cleanup_html_entities(hd(TitleList)));
+            %%     _ -> none
+            %% end;
+    %%     ["image", _] ->
+    %%         none;
+    %%     ["video", _] ->
+    %%         none;
+    %%     ["application", "pdf"] ->
+    %%         dd_pdf:get_pdf_info(list_to_binary(Url));
+    %%     [] -> none
+    %% end.
 
+
+is_title_start({tag, "title", _}) ->
+	true;
+is_title_start(_) ->
+	false.
+
+gpt(URL) ->
+	try
+		PL = trane:wget_parse(URL),
+		TL = lists:dropwhile(fun(X) -> not(is_title_start(X)) end,
+							 PL),
+		[_H,{text, Text}|_] = TL,
+		Text
+	of
+		Result -> Result
+	catch
+		_:_ -> none
+	end.
