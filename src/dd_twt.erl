@@ -175,6 +175,9 @@ get_mentions_and_return_unseen_ones() ->
 	  end
 		  || Tweet <- Mentions ].
 
+report_tweet(_Tweet) ->
+	ok.
+
 have_tweet(#tweet{id=ID}) ->
 	case ets:lookup(twets, ID) of
 		[] -> false;

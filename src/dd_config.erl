@@ -112,7 +112,7 @@ generate_serverconfig(Name, Hostname, Port, Nick, Pass, Sasl, NickPass, SSL, Cha
 
 ask_for_serverconfig() ->
     Name = ec_talk:ask("How do you want to name this connection?"),
-    Host = ec_talk:ask("IP or hostname of the server. (Sort of kind of needs to be Freenode)"),
+    Host = ec_talk:ask("IP or hostname of the server"),
     Port = ec_talk:ask("Port", number),
     Ssl = ec_talk:ask("Do you want to connect through SSL? (Y/N)", boolean),
     Nick = ec_talk:ask("Bot nickname (this is also your nickserv login)"),
