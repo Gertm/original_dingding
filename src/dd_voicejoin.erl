@@ -31,6 +31,7 @@ handle_msg(ReplyPid, Prefix, <<"JOIN">>, Args, _) ->
         <<"yftcl">> -> ok;
 		<<"clue">> -> ok;
 		<<"zebel">> -> ok;
+	<<"zebel_yfl">> -> ok;
         <<"dingd1ng">> -> ok;
         _ -> dd_connection:send_msg(ReplyPid,<<>>,<<"PRIVMSG">>,[<<"ChanServ">>], iolist_to_binary(["VOICE ",Args," ",Nick]))
     end;
