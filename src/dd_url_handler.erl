@@ -220,5 +220,6 @@ gpt(URL) ->
 	of
 		Result -> Result
 	catch
-		_:_ -> none
+		Ex:Re -> io:format("Ex: ~p~nRe: ~p~n",[Ex,Re]),
+				 none
 	end.
