@@ -79,15 +79,15 @@ make_config() ->
     
 generate_serverconfig(Name, Hostname, Port, Nick, Pass, Sasl, NickPass, SSL, Chans, Mods) ->
     [{name, Name},
-     {host, Host},
+     {host, Hostname},
      {port, Port},
      {nick, Nick},
      {pass, Pass},
      {sasl, Sasl},
-     {nickserv_password, NickSrv},
-     {ssl, Ssl},
+     {nickserv_password, NickPass},
+     {ssl, SSL},
      {channels, convert_channels(Chans)},
-     {modules, Mods}];
+     {modules, Mods}].
 
 
 ask_for_serverconfig() ->
