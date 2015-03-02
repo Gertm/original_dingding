@@ -41,7 +41,7 @@ handle_msg(_ReplyPid, Prefix, <<"PART">>, [Channel] , Msg) ->
 handle_msg(_ReplyPid, Prefix, <<"QUIT">>, [] , Msg) ->
     store_activity(dd_db, Prefix, <<"server">>, <<"Quitting with msg: ", Msg/binary>>);
 handle_msg(_ReplyPid, Prefix, <<"CTCP">>, [Channel] , <<"ACTION ", Action/binary>>) ->
-    store_activity(dd_db, Prefix, Channel, <<"doing: ", Action>>);
+    store_activity(dd_db, Prefix, Channel, <<"doing: ", Action/binary>>);
 %% handle_msg(_, Prefix, Cmd, Args, Tail) ->
 %%     io:format("ACT: ~p ~p ~p -> ~p~n", [Prefix, Cmd, Args, Tail]).
 handle_msg(_, _, _, _, _) -> ok.
