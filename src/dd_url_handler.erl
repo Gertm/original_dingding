@@ -25,6 +25,7 @@
 %% debug exports for testing
 -export([type_and_size/1, get_page_title/1]).
 -export([tinyurl/1, gpt/1]).
+-export([get_xidel_title/1]).
 
 %% @doc
 %% Prefix is the part that contains the nickname and host on most messages
@@ -131,7 +132,7 @@ tinyurl(Url) ->
 %%                              binary_to_list(URL)),
 %%     ok.
 
-type_and_size(Url) ->
+type_and_size2(Url) ->
     case string:rstr(Url, ".webm") > 0 of
         true -> {video, 1};
         false ->
@@ -142,6 +143,23 @@ type_and_size(Url) ->
                 _ -> {undefined, undefined}
             end
     end.
+
+type_and_size(Url) ->
+	Resp = dd_helpers:http_head(Url),
+	{T, S} = case Resp of
+				 {ok, {_, Headers, _}} -> {proplists:get_value("content-type", Headers),
+										   proplists:get_value("content-length", Headers)};
+				 _ -> {undefined, undefined}
+			 end,
+	case T of
+		undefined -> {undefined, undefined};
+		_ -> 
+			{string:substr(T, 1, 9), S}
+	end.
+				
+
+		
+
 
 -spec get_page_title(string() | binary()) -> binary() | none.
 get_page_title(<<"http://192.168.", _/binary>>) ->
@@ -172,7 +190,7 @@ get_page_title(TheUrl) ->
 	{T,_} = type_and_size(Url),
 	case string:to_lower(T) of
 		"text/html" ->
-			gpt(Url);
+			get_xidel_title(Url);
 		_ ->
 			none
 	end.
@@ -215,6 +233,9 @@ is_title_start({tag, "title", _}) ->
 	true;
 is_title_start(_) ->
 	false.
+
+get_xidel_title(URL) ->
+	string:strip(os:cmd("/usr/bin/xidel -q -e //title "++URL), both, $\n).
 
 gpt(URL) ->
 	try
