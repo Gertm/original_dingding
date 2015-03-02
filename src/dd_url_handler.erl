@@ -190,6 +190,8 @@ get_page_title(TheUrl) ->
 	{T,_} = type_and_size(Url),
 	case string:to_lower(T) of
 		"text/html" ->
+			%% for this to work, http://videlibri.sourceforge.net/xidel.html
+			%% needs to be installed.
 			get_xidel_title(Url);
 		_ ->
 			none
@@ -234,6 +236,13 @@ is_title_start({tag, "title", _}) ->
 is_title_start(_) ->
 	false.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Gets the title of the URL through Xidel.
+%% http://videlibri.sourceforge.net/xidel.html
+%% Make sure it is installed in /usr/bin/
+%% @end
+%%--------------------------------------------------------------------
 get_xidel_title(URL) ->
 	string:strip(os:cmd("/usr/bin/xidel -q -e //title "++URL), both, $\n).
 
