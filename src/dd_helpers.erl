@@ -22,12 +22,12 @@
 -export([get_urls/1, http_get/1, http_head/1, module_exists/1, utc2sec/0, sec2utc/1, get_db_pid/0, consult_priv_dir_file/1]).
 -export([format_time/0, format_time/1, iso_8601_fmt/1, ppsec2utc/1]).
 -export([add_item_to_proplist_value/3, remove_item_from_proplist_value/3]).
--export([diff2now/1, pptimediff/1]).
+-export([diff2now/1, pptimediff/1, url_encode/1]).
 -export([request_version/2, request_whois/2]).
 -export([ip_to_int/1, int_to_ip/1]).
 -export([bin_to_int/1, int_to_bin/1]).
 -export([get_first_public_ip/0, remove_crnl/1, cleanup_html_entities/1, trim_ws/1]).
-
+-export([write_term_to_file/2]).
 -spec consult_priv_dir_file(string()) -> any().
 consult_priv_dir_file(Filename) ->
     PrivDir = code:lib_dir(dd, priv),    
@@ -223,6 +223,20 @@ cleanup_html_entities(Line) ->
 trim_ws(Bin) ->
     re:replace(Bin, "^\\s+|\\s+$", "", [{return, binary}, global]).
 
+url_encode(Data) ->
+    url_encode(Data,"").
+
+url_encode([],Acc) ->
+    Acc;
+
+url_encode([{Key,Value}|R],"") ->
+    url_encode(R, edoc_lib:escape_uri(Key) ++ "=" ++
+edoc_lib:escape_uri(Value));
+
+url_encode([{Key,Value}|R],Acc) ->
+    url_encode(R, Acc ++ "&" ++ edoc_lib:escape_uri(Key) ++ "=" ++
+edoc_lib:escape_uri(Value)).
+
 %% ================================
 %% IRC PROTOCOL HELPERS
 %% ================================
@@ -237,3 +251,11 @@ request_whois(ReplyPid, Nick) ->
     %% the response to this will be caught in the numeric reply handlers.
     dd_connection:send_msg(ReplyPid, <<>>, <<"WHOIS">>, [Nick], Nick),
     ok.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Write term to file.
+%% @end
+%%--------------------------------------------------------------------
+write_term_to_file(Filename, Term) ->
+	file:write_file(Filename,io_lib:fwrite("~p.~n",[Term])).

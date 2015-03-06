@@ -23,11 +23,13 @@
 -module(dd_connection).
 
 -behaviour(gen_server).
+-define(PRINT(Var, Fmt), io:format(Var, Fmt)).
 -include("../include/dd_irc.hrl").
 
 -define(COLON, 58).
 -define(NEWLINE, "\r\n").
 -define(VERBOSE, yes).
+-define(LOGIN_TIMEOUT, 10000).
 
 %% API
 -export([start_link/1]).
@@ -236,30 +238,28 @@ do_server_login(Sock, Pass, false, false) ->
 %% Do appropriate post-registration login.
 %%
 %% @spec do_final_login(Sock, UserName, Pass, Sasl, NickServ) ->
-%%                                   void()
+%%                                   any().
 %% @end
 %%--------------------------------------------------------------------
 do_final_login(Sock, UserName, Pass, true, _) ->
     %% SASL
     io:format("Finishing SASL authentication.~n"),
-    gen_tcp:send(Sock, "AUTHENTICATE PLAIN"),
-    gen_tcp:send(Sock, ?NEWLINE),
-    gen_tcp:send(Sock, "AUTHENTICATE "),
-    %% TODO: SASL uses the *account* name, not the nick. Assuming for now that they're the same.
-    gen_tcp:send(Sock, base64:encode_to_string(UserName++"\0"++UserName++"\0"++Pass)),
-    gen_tcp:send(Sock, ?NEWLINE),
+    gen_tcp:send(Sock, ["AUTHENTICATE PLAIN", 
+                        ?NEWLINE, 
+                        "AUTHENTICATE ",
+                        base64:encode_to_string(UserName++"\0"++UserName++"\0"++Pass),
+                        ?NEWLINE]),
     %% Here, we need to wait until authentication is complete. Timeout is arbitrary.
     %% TODO: Since I've not gotten that far, I'm just sleeping. :P
-    timer:sleep(10000),
-    gen_tcp:send(Sock, "CAP END"),
-    gen_tcp:send(Sock, ?NEWLINE);
+    timer:sleep(?LOGIN_TIMEOUT),
+    gen_tcp:send(Sock, ["CAP END", ?NEWLINE]);
 
 do_final_login(Sock, UserName, Pass, false, true) ->
     %% NickServ login
     io:format("Doing NickServ password authentication.~n"),
-    gen_tcp:send(Sock, "PRIVMSG NickServ :IDENTIFY "++UserName++" "++Pass++?NEWLINE),
+    gen_tcp:send(Sock, ["PRIVMSG NickServ :IDENTIFY ",UserName," ",Pass,?NEWLINE]),
     %% Give NickServ a few (arbitrary) seconds to identify before joining channels.
-    timer:sleep(10000);
+    timer:sleep(?LOGIN_TIMEOUT);
 
 do_final_login(Sock, _, _, _, _) ->
     gen_tcp:send(Sock, ?NEWLINE).
@@ -279,21 +279,21 @@ handle_info(timeout, #state{serverconfig=#serverconfig{name=Network, hostname=Ho
 
     %% Do the IRC login
     io:format("Logging into ~s (~s:~B). SSL: ~s~n", [Network, Host, Port, Ssl]),
-    if
-        Pass == false ->
-            io:format("No server authentication requested.~n");
+    case Pass of
         true ->
-            do_server_login(Sock, Pass, Sasl, NickServ)
+            do_server_login(Sock, Pass, Sasl, NickServ);
+        _ ->
+            io:format("No server authentication requested.~n")
     end,
     gen_tcp:send(Sock, "NICK "++UserName),
     gen_tcp:send(Sock, "\r\n"),
     gen_tcp:send(Sock, "USER "++UserName++" "++UserName++" "++UserName++" "++UserName),
     gen_tcp:send(Sock, "\r\n"),
-    if
-        Pass == false ->
-            io:format("No final server authentication required.~n");
+    case Pass of
         true ->
-            do_final_login(Sock, UserName, Pass, Sasl, NickServ)
+            do_final_login(Sock, UserName, Pass, Sasl, NickServ);
+        _ ->
+            io:format("No final server authentication required.~n")
     end,
     io:format("Connected to ~s as ~s.~n", [Network, UserName]),
 
