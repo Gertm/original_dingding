@@ -244,7 +244,7 @@ is_title_start(_) ->
 %% @end
 %%--------------------------------------------------------------------
 get_xidel_title(URL) ->
-	list_to_binary(string:strip(os:cmd("/usr/bin/xidel -q -e //title "++URL), both, $\n)).
+	list_to_binary(string:strip(os:cmd("/usr/bin/xidel -q -e //title \""++URL++"\""), both, $\n)).
 
 gpt(URL) ->
 	try
